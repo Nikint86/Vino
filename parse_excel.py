@@ -18,4 +18,4 @@ for index, row in df.iterrows():
 
 print("Продукция на винодельне Розы:")
 print("=" * 50)
-pprint(dict(products)) 
+pprint(dict(products))

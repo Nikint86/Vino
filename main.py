@@ -1,8 +1,9 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Template
 from datetime import datetime
+from collections import defaultdict
+import pandas as pd
 import os
-import json
 
 
 def get_year_word(years):
@@ -20,44 +21,43 @@ def get_year_word(years):
         return "лет"
 
 
-wines = [
-    {
-        "name": "Изабелла",
-        "grape": "Изабелла",
-        "price": "350",
-        "image": "izabella.png"
-    },
-    {
-        "name": "Гранатовый браслет",
-        "grape": "Мускат розовый",
-        "price": "350",
-        "image": "granatovyi_braslet.png"
-    },
-    {
-        "name": "Шардоне",
-        "grape": "Шардоне",
-        "price": "350",
-        "image": "shardone.png"
-    },
-    {
-        "name": "Белая леди",
-        "grape": "Дамский пальчик",
-        "price": "399",
-        "image": "belaya_ledi.png"
-    },
-    {
-        "name": "Ркацители",
-        "grape": "Ркацители",
-        "price": "499",
-        "image": "rkaciteli.png"
-    },
-    {
-        "name": "Хванчкара",
-        "grape": "Александраули",
-        "price": "550",
-        "image": "hvanchkara.png"
-    }
-]
+def load_products():
+    try:
+        df = pd.read_excel('wine2.xlsx', sheet_name='Лист1')
+
+        products = defaultdict(list)
+
+        for index, row in df.iterrows():
+            product = {
+                'name': row['Название'],
+                'grape': row['Сорт'] if pd.notna(row['Сорт']) else '',
+                'price': str(int(row['Цена'])) if pd.notna(row['Цена']) else '',
+                'image': row['Картинка'] if pd.notna(row['Картинка']) else ''
+            }
+
+            products[row['Категория']].append(product)
+
+        for category, items in products.items():
+            print(f"   {category}: {len(items)}")
+
+        return dict(products)
+
+    except FileNotFoundError:
+        print("wine2.xlsx не найден, используем тестовые данные")
+        return {
+            "Белые вина": [
+                {"name": "Кокур", "grape": "Кокур", "price": "450", "image": "kokur.png"}
+            ],
+            "Красные вина": [
+                {"name": "Черный лекарь", "grape": "Качич", "price": "399", "image": "chernyi_lekar.png"},
+                {"name": "Киндзмараули", "grape": "Саперави", "price": "550", "image": "kindzmarauli.png"}
+            ],
+            "Напитки": [
+                {"name": "Коньяк классический", "grape": "", "price": "350", "image": "konyak_klassicheskyi.png"},
+                {"name": "Чача", "grape": "", "price": "299", "image": "chacha.png"},
+                {"name": "Коньяк кизиловый", "grape": "", "price": "350", "image": "konyak_kizilovyi.png"}
+            ]
+        }
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
@@ -70,6 +70,8 @@ class CustomHandler(SimpleHTTPRequestHandler):
 
                 year_word = get_year_word(age)
 
+                products = load_products()
+
                 with open('template.html', 'r', encoding='utf-8') as f:
                     template_content = f.read()
 
@@ -77,9 +79,10 @@ class CustomHandler(SimpleHTTPRequestHandler):
                 rendered_html = template.render(
                     age=age,
                     year_word=year_word,
-                    wines=wines
+                    products=products
                 )
 
+                # Отправляем ответ
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html; charset=utf-8')
                 self.end_headers()

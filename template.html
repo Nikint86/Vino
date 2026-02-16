@@ -105,33 +105,47 @@
     
     <div><a id="products"></a></div>
     <div class="site-section">
-  <div class="container">
-    <div class="row">
-      <div class="col-12 section-title text-center mb-5">
-        <h2 class="d-block">Коллекция вин</h2>
-        <p>Вино — один из самых благородных и многогранных напитков в мире! Виноделие берёт своё начало с незапамятных времён. Вино упоминается в Библии и Коране, греческой и римской мифологии, где были свои боги вина (к примеру, Дионис). Стоит отметить, что почти у каждого народа существует своя легенда, повествующая о появлении божественного эликсира — вина.
-        </p>
-      </div>
-    </div>
-
-    <div class="row">
-      {% for wine in wines %}
-      <div class="col-lg-4 mb-5 col-md-6">
-        <div class="wine_v_1 text-center pb-4 pt-5">
-          <img src="images/{{ wine.image }}" alt="{{ wine.name }}" class="img-fluid">
-          <div>
-            <h3 class="heading mt-3 mb-3 text-dark">{{ wine.name }}</h3>
-            <p>
-              Сорт винограда - {{ wine.grape }}<br/>
-              <span class="price">{{ wine.price }} р.</span>
+      <div class="container">
+        <div class="row">
+          <div class="col-12 section-title text-center mb-5">
+            <h2 class="d-block">Коллекция вин</h2>
+            <p>Вино — один из самых благородных и многогранных напитков в мире! Виноделие берёт своё начало с незапамятных времён. Вино упоминается в Библии и Коране, греческой и римской мифологии, где были свои боги вина (к примеру, Дионис). Стоит отметить, что почти у каждого народа существует своя легенда, повествующая о появлении божественного эликсира — вина.
             </p>
           </div>
         </div>
+
+        <!-- Проходим по всем категориям товаров -->
+        {% for category, items in products.items() %}
+        <!-- Заголовок категории (копирует стиль заголовка "Коллекция вин") -->
+        <div class="row mb-4">
+          <div class="col-12 text-center">
+            <h3 class="d-block" style="font-size: 2rem; color: #333;">{{ category }}</h3>
+            <div class="divider mx-auto"></div>
+          </div>
+        </div>
+
+        <!-- Товары в категории -->
+        <div class="row mb-5">
+          {% for product in items %}
+          <div class="col-lg-4 mb-5 col-md-6">
+            <div class="wine_v_1 text-center pb-4 pt-5">
+              <img src="images/{{ product.image }}" alt="{{ product.name }}" class="img-fluid">
+              <div>
+                <h3 class="heading mt-3 mb-3 text-dark">{{ product.name }}</h3>
+                <p>
+                  {% if product.grape %}
+                  Сорт винограда - {{ product.grape }}<br/>
+                  {% endif %}
+                  <span class="price">{{ product.price }} р.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
-  </div>
-</div>
 
     <div class="hero-2" style="background-image: url('assets/hero_2.jpg');">
     <div><a id="feedback"></a></div>
@@ -148,7 +162,7 @@
     <div class="site-section bg-light">
       <div class="container">
         <div class="owl-carousel owl-slide-3 owl-slide">
-        
+
           <blockquote class="testimony">
             <img src="assets/person_1.jpg" alt="Фото">
             <p>&ldquo;Если бы вино Киндзмараули вдруг стало мужчиной, то это был бы средних лет (35-40 лет) аристократичный мужчина, в белой дорогой рубашке и брюках,
@@ -169,17 +183,17 @@
             <p>&ldquo;Вина Шардоне хорошо подходят к нейтральным по остроте мясным, рыбным блюдам, блюдам из птицы, сырам и фруктам (яблоко, апельсин и груша). Вино мне понравилось, голова на утро от него не болела. Рекомендую.&rdquo;</p>
             <p class="small text-primary">&mdash; Андрей Власов</p>
           </blockquote>
-       
+
         </div>
       </div>
     </div>
-  
 
-    
+
+
     <div class="footer">
       <div><a id="footer"></a></div>
       <div class="container">
-        
+
         <div class="row">
           <div class="col-12 text-center">
             <div class="social-icons">
@@ -206,7 +220,7 @@
         </div>
       </div>
     </div>
-    
+
 
   </div>
   <!-- .site-wrap -->
