@@ -2,6 +2,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Template
 from datetime import datetime
 import os
+import json
 
 
 def get_year_word(years):
@@ -17,6 +18,46 @@ def get_year_word(years):
         return "года"
     else:
         return "лет"
+
+
+wines = [
+    {
+        "name": "Изабелла",
+        "grape": "Изабелла",
+        "price": "350",
+        "image": "izabella.png"
+    },
+    {
+        "name": "Гранатовый браслет",
+        "grape": "Мускат розовый",
+        "price": "350",
+        "image": "granatovyi_braslet.png"
+    },
+    {
+        "name": "Шардоне",
+        "grape": "Шардоне",
+        "price": "350",
+        "image": "shardone.png"
+    },
+    {
+        "name": "Белая леди",
+        "grape": "Дамский пальчик",
+        "price": "399",
+        "image": "belaya_ledi.png"
+    },
+    {
+        "name": "Ркацители",
+        "grape": "Ркацители",
+        "price": "499",
+        "image": "rkaciteli.png"
+    },
+    {
+        "name": "Хванчкара",
+        "grape": "Александраули",
+        "price": "550",
+        "image": "hvanchkara.png"
+    }
+]
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
@@ -35,7 +76,8 @@ class CustomHandler(SimpleHTTPRequestHandler):
                 template = Template(template_content)
                 rendered_html = template.render(
                     age=age,
-                    year_word=year_word
+                    year_word=year_word,
+                    wines=wines
                 )
 
                 self.send_response(200)
@@ -43,7 +85,6 @@ class CustomHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(rendered_html.encode('utf-8'))
 
-                print(f"Возраст винодельни: {age} {year_word}")
                 return
 
             except FileNotFoundError:
