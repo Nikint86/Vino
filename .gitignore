@@ -1,3 +1,23 @@
-env/
-.vscode/
 
+.venv/
+venv/
+env/
+ENV/
+
+.idea/
+.vscode/
+*.swp
+*.swo
+
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+
+
+.DS_Store
+Thumbs.db
+
+
+*.log
