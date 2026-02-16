@@ -1,6 +1,22 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Template
 from datetime import datetime
+import os
+
+
+def get_year_word(years):
+    last_two = years % 100
+    last_one = years % 10
+
+    if 11 <= last_two <= 19:
+        return "лет"
+
+    if last_one == 1:
+        return "год"
+    elif 2 <= last_one <= 4:
+        return "года"
+    else:
+        return "лет"
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
@@ -11,18 +27,23 @@ class CustomHandler(SimpleHTTPRequestHandler):
                 foundation_year = 1920
                 age = current_year - foundation_year
 
+                year_word = get_year_word(age)
+
                 with open('template.html', 'r', encoding='utf-8') as f:
                     template_content = f.read()
 
                 template = Template(template_content)
-                rendered_html = template.render(age=age)
+                rendered_html = template.render(
+                    age=age,
+                    year_word=year_word
+                )
 
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html; charset=utf-8')
                 self.end_headers()
                 self.wfile.write(rendered_html.encode('utf-8'))
 
-                print(f"Возраст винодельни: {age} лет")
+                print(f"Возраст винодельни: {age} {year_word}")
                 return
 
             except FileNotFoundError:
