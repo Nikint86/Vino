@@ -23,7 +23,7 @@ def get_year_word(years):
 
 def load_products():
     try:
-        df = pd.read_excel('wine2.xlsx', sheet_name='Лист1')
+        df = pd.read_excel('wine3.xlsx', sheet_name='Лист1')
 
         products = defaultdict(list)
 
@@ -32,32 +32,43 @@ def load_products():
                 'name': row['Название'],
                 'grape': row['Сорт'] if pd.notna(row['Сорт']) else '',
                 'price': str(int(row['Цена'])) if pd.notna(row['Цена']) else '',
-                'image': row['Картинка'] if pd.notna(row['Картинка']) else ''
+                'image': row['Картинка'] if pd.notna(row['Картинка']) else '',
+                'sale': row['Акция'] if pd.notna(row['Акция']) else ''
             }
 
             products[row['Категория']].append(product)
 
+        print(f"Загружено товаров: {sum(len(v) for v in products.values())}")
         for category, items in products.items():
-            print(f"   {category}: {len(items)}")
+            sale_count = sum(1 for item in items if item['sale'])
+            print(f"   {category}: {len(items)} (акций: {sale_count})")
 
         return dict(products)
 
     except FileNotFoundError:
-        print("wine2.xlsx не найден, используем тестовые данные")
+        print("wine3.xlsx не найден, используем тестовые данные")
         return {
             "Белые вина": [
-                {"name": "Кокур", "grape": "Кокур", "price": "450", "image": "kokur.png"}
+                {"name": "Кокур", "grape": "Кокур", "price": "450", "image": "kokur.png", "sale": ""},
+                {"name": "Ркацители", "grape": "Ркацители", "price": "499", "image": "rkaciteli.png", "sale": ""},
+                {"name": "Белая леди", "grape": "Дамский пальчик", "price": "399", "image": "belaya_ledi.png",
+                 "sale": "Выгодное предложение"}
             ],
             "Красные вина": [
-                {"name": "Черный лекарь", "grape": "Качич", "price": "399", "image": "chernyi_lekar.png"},
-                {"name": "Киндзмараули", "grape": "Саперави", "price": "550", "image": "kindzmarauli.png"}
+                {"name": "Черный лекарь", "grape": "Качич", "price": "399", "image": "chernyi_lekar.png", "sale": ""},
+                {"name": "Киндзмараули", "grape": "Саперави", "price": "550", "image": "kindzmarauli.png", "sale": ""},
+                {"name": "Хванчкара", "grape": "Александраули", "price": "550", "image": "hvanchkara.png", "sale": ""}
             ],
             "Напитки": [
-                {"name": "Коньяк классический", "grape": "", "price": "350", "image": "konyak_klassicheskyi.png"},
-                {"name": "Чача", "grape": "", "price": "299", "image": "chacha.png"},
-                {"name": "Коньяк кизиловый", "grape": "", "price": "350", "image": "konyak_kizilovyi.png"}
+                {"name": "Коньяк классический", "grape": "", "price": "350", "image": "konyak_klassicheskyi.png",
+                 "sale": ""},
+                {"name": "Чача", "grape": "", "price": "299", "image": "chacha.png", "sale": "Выгодное предложение"},
+                {"name": "Коньяк кизиловый", "grape": "", "price": "350", "image": "konyak_kizilovyi.png", "sale": ""}
             ]
         }
+    except Exception as e:
+        print(f"Ошибка при загрузке данных: {e}")
+        return {}
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
@@ -82,21 +93,32 @@ class CustomHandler(SimpleHTTPRequestHandler):
                     products=products
                 )
 
-                # Отправляем ответ
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html; charset=utf-8')
                 self.end_headers()
                 self.wfile.write(rendered_html.encode('utf-8'))
 
+                print(f"Страница обновлена: {age} {year_word}")
                 return
 
             except FileNotFoundError:
                 print("template.html не найден")
                 self.send_error(404, "template.html not found")
                 return
+            except Exception as e:
+                print(f"Ошибка: {e}")
+                self.send_error(500, f"Internal server error: {e}")
+                return
 
         super().do_GET()
 
 
-server = HTTPServer(('0.0.0.0', 8000), CustomHandler)
-server.serve_forever()
+if __name__ == '__main__':
+    server_address = ('0.0.0.0', 8000)
+    httpd = HTTPServer(server_address, CustomHandler)
+
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nСервер остановлен")

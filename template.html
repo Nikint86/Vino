@@ -129,7 +129,13 @@
           {% for product in items %}
           <div class="col-lg-4 mb-5 col-md-6">
             <div class="wine_v_1 text-center pb-4 pt-5">
-              <img src="images/{{ product.image }}" alt="{{ product.name }}" class="img-fluid">
+              <div style="position: relative; display: inline-block; width: 100%;">
+                <img src="images/{{ product.image }}" alt="{{ product.name }}" class="img-fluid" style="width: 100%;">
+                <!-- Значок акции, если есть -->
+                {% if product.sale %}
+                <span style="position: absolute; top: 10px; right: 10px; background-color: #ff5e15; color: white; padding: 8px 15px; border-radius: 30px; font-size: 14px; font-weight: bold; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; animation: pulse 2s infinite;">{{ product.sale }}</span>
+                {% endif %}
+              </div>
               <div>
                 <h3 class="heading mt-3 mb-3 text-dark">{{ product.name }}</h3>
                 <p>
@@ -228,6 +234,14 @@
 
   <!-- loader -->
   <div id="loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#ff5e15"/></svg></div>
+
+  <style>
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+  </style>
 
   <script src="js/jquery-3.3.1.min.js"></script>
   <script src="js/jquery-migrate-3.0.1.min.js"></script>
