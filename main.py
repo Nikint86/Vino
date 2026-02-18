@@ -4,6 +4,7 @@ from datetime import datetime
 from collections import defaultdict
 import pandas as pd
 import os
+import sys
 
 
 def get_year_word(years):
@@ -27,70 +28,68 @@ def load_products():
 
     df = pd.read_excel('wine3.xlsx', sheet_name='Лист1')
 
+    required_columns = ['Категория', 'Название', 'Цена', 'Картинка']
+    for col in required_columns:
+        if col not in df.columns:
+            raise ValueError(f"В файле отсутствует обязательная колонка: {col}")
+
     products = defaultdict(list)
 
     for index, row in df.iterrows():
         product = {
             'name': row['Название'],
-            'grape': row['Сорт'] if pd.notna(row['Сорт']) else '',
+            'grape': row['Сорт'] if pd.notna(row.get('Сорт')) else '',
             'price': str(int(row['Цена'])) if pd.notna(row['Цена']) else '',
             'image': row['Картинка'] if pd.notna(row['Картинка']) else '',
-            'sale': row['Акция'] if pd.notna(row['Акция']) else ''
+            'sale': row['Акция'] if pd.notna(row.get('Акция')) else ''
         }
 
         products[row['Категория']].append(product)
 
-    print(f"Загружено товаров: {sum(len(v) for v in products.values())}")
-    for category, items in products.items():
-        sale_count = sum(1 for item in items if item['sale'])
-        print(f"   {category}: {len(items)} (акций: {sale_count})")
-
     return dict(products)
+
+
+def render_website(products, age, year_word):
+    with open('template.html', 'r', encoding='utf-8') as f:
+        template_content = f.read()
+
+    template = Template(template_content)
+    return template.render(
+        age=age,
+        year_word=year_word,
+        products=products
+    )
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/' or self.path == '/index.html':
-            try:
-                current_year = datetime.now().year
-                foundation_year = 1920
-                age = current_year - foundation_year
-
-                year_word = get_year_word(age)
-
-                products = load_products()
-
-                with open('template.html', 'r', encoding='utf-8') as f:
-                    template_content = f.read()
-
-                template = Template(template_content)
-                rendered_html = template.render(
-                    age=age,
-                    year_word=year_word,
-                    products=products
-                )
-
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html; charset=utf-8')
-                self.end_headers()
-                self.wfile.write(rendered_html.encode('utf-8'))
-
-                print(f"✅ Страница обновлена: {age} {year_word}")
-
-            except FileNotFoundError as e:
-                print(f"Ошибка: {e}")
-                self.send_error(404, f"Файл не найден: {e}")
-            except Exception as e:
-                print(f"Ошибка: {e}")
-                self.send_error(500, f"Внутренняя ошибка сервера: {e}")
-
+        if self.path != '/' and self.path != '/index.html':
+            super().do_GET()
             return
 
-        super().do_GET()
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(HTML_CONTENT.encode('utf-8'))
 
 
-if __name__ == '__main__':
-    server_address = ('0.0.0.0', 8000)
+HTML_CONTENT = None
+
+
+def update_html_cache():
+    global HTML_CONTENT
+
+    current_year = datetime.now().year
+    foundation_year = 1920
+    age = current_year - foundation_year
+
+    year_word = get_year_word(age)
+    products = load_products()
+    HTML_CONTENT = render_website(products, age, year_word)
+
+
+def start_server(port=8000):
+    server_address = ('0.0.0.0', port)
     httpd = HTTPServer(server_address, CustomHandler)
 
 
@@ -98,3 +97,30 @@ if __name__ == '__main__':
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("Сервер остановлен")
+        sys.exit(0)
+
+
+def main():
+    try:
+        update_html_cache()
+    except FileNotFoundError as e:
+        print(f"Критическая ошибка: {e}")
+        print("Убедитесь, что файл существует в папке с проектом")
+        sys.exit(1)
+    except ValueError as e:
+        print(f"Ошибка в данных: {e}")
+        print("   Проверьте структуру Excel файла")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Непредвиденная ошибка: {e}")
+        sys.exit(1)
+
+    try:
+        start_server()
+    except Exception as e:
+        print(f"Ошибка при запуске сервера: {e}")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
