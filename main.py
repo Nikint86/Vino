@@ -68,15 +68,23 @@ def render_website(products, age, year_word):
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
-    def do_GET(self):
-        if self.path != '/' and self.path != '/index.html':
-            super().do_GET()
-            return
+    def _is_main_page(self):
+        return self.path == '/' or self.path == '/index.html'
 
+    def _handle_main_page(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html; charset=utf-8')
         self.end_headers()
         self.wfile.write(HTML_CONTENT.encode('utf-8'))
+
+    def _handle_static_file(self):
+        super().do_GET()
+
+    def do_GET(self):
+        if self._is_main_page():
+            self._handle_main_page()
+        else:
+            self._handle_static_file()
 
 
 HTML_CONTENT = None
