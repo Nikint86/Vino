@@ -5,7 +5,7 @@ from collections import defaultdict
 import pandas as pd
 import os
 import sys
-
+import argparse
 
 def get_year_word(years):
     last_two = years % 100
@@ -21,6 +21,12 @@ def get_year_word(years):
     else:
         return "лет"
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Сервер винодельни Розы')
+    parser.add_argument('data_file', nargs='?', default='wine3.xlsx',
+                        help='Путь к Excel файлу с данными (по умолчанию wine3.xlsx)')
+
+    return parser.parse_args()
 
 def load_products():
     if not os.path.exists('wine3.xlsx'):
@@ -74,7 +80,7 @@ class CustomHandler(SimpleHTTPRequestHandler):
 
 
 HTML_CONTENT = None
-
+DATA_FILE = None
 
 def update_html_cache():
     global HTML_CONTENT
@@ -101,6 +107,12 @@ def start_server(port=8000):
 
 
 def main():
+    global DATA_FILE
+
+
+    args = parse_arguments()
+    DATA_FILE = args.data_file
+
     try:
         update_html_cache()
     except FileNotFoundError as e:
