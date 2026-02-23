@@ -7,6 +7,12 @@ import os
 import sys
 import argparse
 
+HTML_CONTENT = None
+DATA_FILE = None
+FOUNDATION_YEAR = 1920
+PORT = 8000
+TEMPLATE_FILE = 'template.html'
+
 
 def get_year_word(years):
     last_two = years % 100
@@ -58,12 +64,10 @@ def load_products(data_file):
 
 
 def render_website(products, age, year_word):
-    template_file = 'template.html'
+    if not os.path.exists(TEMPLATE_FILE):
+        raise FileNotFoundError(f"Файл шаблона '{TEMPLATE_FILE}' не найден")
 
-    if not os.path.exists(template_file):
-        raise FileNotFoundError(f"Файл шаблона '{template_file}' не найден")
-
-    with open(template_file, 'r', encoding='utf-8') as f:
+    with open(TEMPLATE_FILE, 'r', encoding='utf-8') as f:
         template_content = f.read()
 
     template = Template(template_content)
@@ -72,6 +76,17 @@ def render_website(products, age, year_word):
         year_word=year_word,
         products=products
     )
+
+
+def update_html_cache(data_file):
+    global HTML_CONTENT
+
+    current_year = datetime.now().year
+    age = current_year - FOUNDATION_YEAR
+
+    year_word = get_year_word(age)
+    products = load_products(data_file)
+    HTML_CONTENT = render_website(products, age, year_word)
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
@@ -94,25 +109,8 @@ class CustomHandler(SimpleHTTPRequestHandler):
             self._handle_static_file()
 
 
-HTML_CONTENT = None
-DATA_FILE = None
-
-
-def update_html_cache(data_file):
-    global HTML_CONTENT
-
-    current_year = datetime.now().year
-    foundation_year = 1920
-    age = current_year - foundation_year
-
-    year_word = get_year_word(age)
-    products = load_products(data_file)
-    HTML_CONTENT = render_website(products, age, year_word)
-
-
 def start_server():
-    port = 8000
-    server_address = ('0.0.0.0', port)
+    server_address = ('0.0.0.0', PORT)
     httpd = HTTPServer(server_address, CustomHandler)
 
     try:
@@ -129,12 +127,12 @@ def main():
 
     try:
         update_html_cache(DATA_FILE)
-    except (FileNotFoundError, ValueError, Exception) as e:
+    except (FileNotFoundError, ValueError, Exception):
         sys.exit(1)
 
     try:
         start_server()
-    except Exception as e:
+    except Exception:
         sys.exit(1)
 
 
