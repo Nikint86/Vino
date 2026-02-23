@@ -7,11 +7,11 @@ import os
 import sys
 import argparse
 
-HTML_CONTENT = None
-DATA_FILE = None
 FOUNDATION_YEAR = 1920
 PORT = 8000
 TEMPLATE_FILE = 'template.html'
+DEFAULT_DATA_FILE = 'wine3.xlsx'
+HTML_CONTENT = None
 
 
 def get_year_word(years):
@@ -31,8 +31,8 @@ def get_year_word(years):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Сервер винодельни Розы')
-    parser.add_argument('data_file', nargs='?', default='wine3.xlsx',
-                        help='Путь к Excel файлу с данными (по умолчанию wine3.xlsx)')
+    parser.add_argument('data_file', nargs='?', default=DEFAULT_DATA_FILE,
+                        help='Путь к Excel файлу с данными')
     return parser.parse_args()
 
 
@@ -78,15 +78,13 @@ def render_website(products, age, year_word):
     )
 
 
-def update_html_cache(data_file):
-    global HTML_CONTENT
-
+def generate_html(data_file):
     current_year = datetime.now().year
     age = current_year - FOUNDATION_YEAR
 
     year_word = get_year_word(age)
     products = load_products(data_file)
-    HTML_CONTENT = render_website(products, age, year_word)
+    return render_website(products, age, year_word)
 
 
 class CustomHandler(SimpleHTTPRequestHandler):
@@ -120,13 +118,13 @@ def start_server():
 
 
 def main():
-    global DATA_FILE
+    global HTML_CONTENT
 
     args = parse_arguments()
-    DATA_FILE = args.data_file
+    data_file = args.data_file
 
     try:
-        update_html_cache(DATA_FILE)
+        HTML_CONTENT = generate_html(data_file)
     except (FileNotFoundError, ValueError, Exception):
         sys.exit(1)
 
