@@ -5,9 +5,15 @@
 ## Запуск
 
 - Скачайте код
-- Установите зависимости командой `pip install pandas openpyxl jinja2`
-- Запустите сайт командой `python3 main.py`
+- Установите зависимости командой `pip install -r requirements.txt`
+- Запустите сайт командой `python3 main.py` (с файлом wine3.xlsx)
 - Перейдите на сайт по адресу [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+Запуск с пользовательским файлом данных:
+
+- `python main.py my_data.xlsx`
+- `python main.py data/sales.xlsx`
+- `python main.py /home/user/wine.xlsx`
 
 # Проверка работы
 
