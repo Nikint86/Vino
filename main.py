@@ -7,6 +7,7 @@ import os
 import sys
 import argparse
 
+
 def get_year_word(years):
     last_two = years % 100
     last_one = years % 10
@@ -21,18 +22,19 @@ def get_year_word(years):
     else:
         return "лет"
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Сервер винодельни Розы')
     parser.add_argument('data_file', nargs='?', default='wine3.xlsx',
                         help='Путь к Excel файлу с данными (по умолчанию wine3.xlsx)')
-
     return parser.parse_args()
 
-def load_products():
-    if not os.path.exists('wine3.xlsx'):
-        raise FileNotFoundError("Файл wine3.xlsx не найден")
 
-    df = pd.read_excel('wine3.xlsx', sheet_name='Лист1')
+def load_products(data_file):
+    if not os.path.exists(data_file):
+        raise FileNotFoundError(f"Файл '{data_file}' не найден")
+
+    df = pd.read_excel(data_file, sheet_name='Лист1')
 
     required_columns = ['Категория', 'Название', 'Цена', 'Картинка']
     for col in required_columns:
@@ -56,7 +58,12 @@ def load_products():
 
 
 def render_website(products, age, year_word):
-    with open('template.html', 'r', encoding='utf-8') as f:
+    template_file = 'template.html'
+
+    if not os.path.exists(template_file):
+        raise FileNotFoundError(f"Файл шаблона '{template_file}' не найден")
+
+    with open(template_file, 'r', encoding='utf-8') as f:
         template_content = f.read()
 
     template = Template(template_content)
@@ -90,7 +97,8 @@ class CustomHandler(SimpleHTTPRequestHandler):
 HTML_CONTENT = None
 DATA_FILE = None
 
-def update_html_cache():
+
+def update_html_cache(data_file):
     global HTML_CONTENT
 
     current_year = datetime.now().year
@@ -98,47 +106,35 @@ def update_html_cache():
     age = current_year - foundation_year
 
     year_word = get_year_word(age)
-    products = load_products()
+    products = load_products(data_file)
     HTML_CONTENT = render_website(products, age, year_word)
 
 
-def start_server(port=8000):
+def start_server():
+    port = 8000
     server_address = ('0.0.0.0', port)
     httpd = HTTPServer(server_address, CustomHandler)
-
 
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("Сервер остановлен")
         sys.exit(0)
 
 
 def main():
     global DATA_FILE
 
-
     args = parse_arguments()
     DATA_FILE = args.data_file
 
     try:
-        update_html_cache()
-    except FileNotFoundError as e:
-        print(f"Критическая ошибка: {e}")
-        print("Убедитесь, что файл существует в папке с проектом")
-        sys.exit(1)
-    except ValueError as e:
-        print(f"Ошибка в данных: {e}")
-        print("   Проверьте структуру Excel файла")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Непредвиденная ошибка: {e}")
+        update_html_cache(DATA_FILE)
+    except (FileNotFoundError, ValueError, Exception) as e:
         sys.exit(1)
 
     try:
         start_server()
     except Exception as e:
-        print(f"Ошибка при запуске сервера: {e}")
         sys.exit(1)
 
 
